@@ -85,14 +85,16 @@
     <script type="text/babel">
         const { useState, useRef, useEffect } = React;
 
-        // ==========================================
-        // 💡 在這裡更換您的圖床圖片網址 (PNG 連結)
-        // ==========================================
-        const HORSE_IMAGE_URL = "https://raw.githubusercontent.com/belovedraod/test-newyear01/refs/heads/main/new_horse.png"; 
+        // ============================================================
+        // 💡 在這裡替換四個角落與表頭的 PNG 圖片網址
+        // ============================================================
+        const HORSE_HEADER_URL = "https://img.freepik.com/free-vector/cute-horse-cartoon-vector-icon-illustration-animal-nature-icon-concept-isolated-premium-vector_138676-5412.jpg"; 
+        
+        const SUN_IMAGE_URL   = "https://img.freepik.com/free-vector/sun-icon-vector-isolated-white-background_138676-5412.jpg"; // 左上角
+        const HORSE_ICON_URL  = "https://img.freepik.com/free-vector/cute-horse-cartoon-vector-icon-illustration-animal-nature-icon-concept-isolated-premium-vector_138676-5412.jpg"; // 右上角
+        const BIRD_IMAGE_URL  = "https://img.freepik.com/free-vector/cute-bird-cartoon-vector-icon-illustration-animal-nature-icon-concept-isolated-premium-vector_138676-5412.jpg";  // 左下角
+        const GOLD_IMAGE_URL  = "https://img.freepik.com/free-vector/gold-ingot-cartoon-vector-icon-illustration-wealth-concept-isolated-premium-vector_138676-5412.jpg";      // 右下角
 
-        /**
-         * Lucide 圖示組件
-         */
         const Icon = ({ name, size = 24, className = "" }) => {
             useEffect(() => {
                 if (window.lucide) lucide.createIcons();
@@ -100,37 +102,21 @@
             return <i data-lucide={name} style={{ width: size, height: size }} className={className}></i>;
         };
 
-        /**
-         * 表頭金色閃爍背景
-         */
         const GoldenBackground = () => {
             const [particles, setParticles] = useState([]);
             useEffect(() => {
                 const p = Array.from({ length: 25 }).map((_, i) => ({
                     id: i,
-                    width: Math.random() * 8 + 2 + 'px',
-                    height: Math.random() * 8 + 2 + 'px',
-                    top: Math.random() * 100 + '%',
-                    left: Math.random() * 100 + '%',
-                    delay: Math.random() * 3 + 's',
-                    duration: Math.random() * 2 + 2 + 's'
+                    width: Math.random() * 8 + 2 + 'px', height: Math.random() * 8 + 2 + 'px',
+                    top: Math.random() * 100 + '%', left: Math.random() * 100 + '%',
+                    delay: Math.random() * 3 + 's', duration: Math.random() * 2 + 2 + 's'
                 }));
                 setParticles(p);
             }, []);
-
             return (
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
                     {particles.map(p => (
-                        <div 
-                            key={p.id}
-                            className="sparkle"
-                            style={{
-                                width: p.width, height: p.height,
-                                top: p.top, left: p.left,
-                                animationDelay: p.delay,
-                                animationDuration: p.duration
-                            }}
-                        />
+                        <div key={p.id} className="sparkle" style={{ width: p.width, height: p.height, top: p.top, left: p.left, animationDelay: p.delay, animationDuration: p.duration }} />
                     ))}
                     <div className="shimmer-line" style={{ top: '0%', left: '20%', animationDelay: '0s' }} />
                     <div className="shimmer-line" style={{ top: '10%', left: '70%', animationDelay: '2.5s' }} />
@@ -141,7 +127,7 @@
         const HandDrawnHorse = () => (
             <div className="w-32 h-32 flex items-center justify-center overflow-hidden rounded-full bg-white/20 p-2 border-4 border-white/30 shadow-2xl relative z-10">
                 <img 
-                    src={HORSE_IMAGE_URL} 
+                    src={HORSE_HEADER_URL} 
                     alt="馬年吉祥物" 
                     className="max-w-full max-h-full object-contain"
                     onError={(e) => {
@@ -176,10 +162,7 @@
                 const file = e.target.files[0];
                 if (file) {
                     const reader = new FileReader();
-                    reader.onload = (event) => {
-                        setUserImage(event.target.result);
-                        setStep(3);
-                    };
+                    reader.onload = (event) => { setUserImage(event.target.result); setStep(3); };
                     reader.readAsDataURL(file);
                 }
             };
@@ -189,98 +172,97 @@
                     setIsGenerating(true);
                     const canvas = canvasRef.current;
                     const ctx = canvas.getContext('2d');
-                    const img = new Image();
-                    const horseIcon = new Image();
                     
-                    img.src = userImage;
-                    horseIcon.src = HORSE_IMAGE_URL;
-                    horseIcon.crossOrigin = "anonymous"; 
+                    // 預載入所有需要的圖片
+                    const images = {
+                        user: new Image(),
+                        sun: new Image(),
+                        horse: new Image(),
+                        bird: new Image(),
+                        gold: new Image()
+                    };
+                    
+                    images.user.src = userImage;
+                    images.sun.src = SUN_IMAGE_URL;
+                    images.horse.src = HORSE_ICON_URL;
+                    images.bird.src = BIRD_IMAGE_URL;
+                    images.gold.src = GOLD_IMAGE_URL;
+                    
+                    Object.values(images).forEach(img => img.crossOrigin = "anonymous");
 
-                    let imagesLoaded = 0;
-                    const checkDone = () => {
-                        imagesLoaded++;
-                        if (imagesLoaded === 2) {
-                            drawFinalCard(ctx, canvas, img, horseIcon);
+                    let loadedCount = 0;
+                    const onLoaded = () => {
+                        loadedCount++;
+                        if (loadedCount === 5) {
+                            drawFinalCard(ctx, canvas, images);
                             setFinalImageUrl(canvas.toDataURL('image/png'));
                             setIsGenerating(false);
                         }
                     };
 
-                    img.onload = checkDone;
-                    horseIcon.onload = checkDone;
-                    horseIcon.onerror = checkDone; 
+                    Object.values(images).forEach(img => {
+                        img.onload = onLoaded;
+                        img.onerror = onLoaded; // 即使某張圖失敗也繼續
+                    });
                 }
             }, [step, selectedWish, userImage]);
 
-            const drawFinalCard = (ctx, canvas, mainImg, horseIcon) => {
+            const drawFinalCard = (ctx, canvas, images) => {
                 canvas.width = 1000;
-                canvas.height = 1550; 
+                canvas.height = 1800; 
+                
                 const filteredPhrases = luckPhrases.filter(p => !selectedWish.blessing.includes(p));
                 const randomPhrase = filteredPhrases[Math.floor(Math.random() * filteredPhrases.length)] || luckPhrases[0];
 
                 // 背景
-                ctx.fillStyle = '#fdfbf7'; 
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#fdfbf7'; ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.save();
                 ctx.globalAlpha = 0.95; ctx.fillStyle = '#C8102E'; 
-                drawHandDrawnRect(ctx, 40, 40, 920, 1470, 60);
+                drawHandDrawnRect(ctx, 40, 40, 920, 1720, 60);
                 ctx.fill(); ctx.restore();
 
                 // 邊框
                 ctx.strokeStyle = 'rgba(253, 230, 138, 0.7)'; ctx.lineWidth = 12; ctx.setLineDash([20, 15]);
-                drawHandDrawnRect(ctx, 70, 70, 860, 1410, 40); ctx.stroke(); ctx.setLineDash([]);
+                drawHandDrawnRect(ctx, 70, 70, 860, 1660, 40); ctx.stroke(); ctx.setLineDash([]);
 
                 // 照片
                 const photoX = 100, photoY = 130, photoW = 800, photoH = 750;
                 ctx.save(); drawHandDrawnRect(ctx, photoX, photoY, photoW, photoH, 50); ctx.clip();
-                const imgRatio = mainImg.width / mainImg.height;
+                const imgRatio = images.user.width / images.user.height;
                 const targetRatio = photoW / photoH;
                 let dW, dH, dX, dY;
-                if (imgRatio > targetRatio) { dW = mainImg.width * (photoH / mainImg.height); dH = photoH; dX = photoX - (dW - photoW) / 2; dY = photoY; }
-                else { dW = photoW; dH = mainImg.height * (photoW / mainImg.width); dX = photoX; dY = photoY - (dH - photoH) / 2; }
-                ctx.drawImage(mainImg, dX, dY, dW, dH); ctx.restore();
+                if (imgRatio > targetRatio) { dW = images.user.width * (photoH / images.user.height); dH = photoH; dX = photoX - (dW - photoW) / 2; dY = photoY; }
+                else { dW = photoW; dH = images.user.height * (photoW / images.user.width); dX = photoX; dY = photoY - (dH - photoH) / 2; }
+                ctx.drawImage(images.user, dX, dY, dW, dH); ctx.restore();
 
-                // 文字 (鴻圖大展)
-                ctx.fillStyle = '#FDE68A'; ctx.textAlign = 'center'; ctx.font = 'bold 90px "Noto Serif TC", serif';
-                ctx.fillText(selectedWish.blessing, 500, 1010); 
-                ctx.font = '38px sans-serif'; ctx.fillText(`2026 丙午馬年 · 願您${selectedWish.label}如意`, 500, 1090); 
-                if (userName) { ctx.font = 'bold 42px "Noto Serif TC", serif'; ctx.fillText(`${userName} 敬賀`, 500, 1170); }
-
-                // 馬圖案
-                if (horseIcon.complete && horseIcon.naturalWidth !== 0) {
-                    ctx.drawImage(horseIcon, 830, 80, 110, 110);
-                    ctx.drawImage(horseIcon, 70, 1280, 90, 90); 
+                // 文字排版 (大字設計)
+                ctx.fillStyle = '#FDE68A'; ctx.textAlign = 'center'; 
+                ctx.font = 'bold 95px "Noto Serif TC", serif'; ctx.fillText(selectedWish.blessing, 500, 1050); 
+                ctx.font = '48px sans-serif'; ctx.fillText(`2026 丙午馬年 · 願您${selectedWish.label}如意`, 500, 1150); 
+                if (userName) {
+                    ctx.font = 'bold 54px "Noto Serif TC", serif';
+                    ctx.fillText(`${userName} 敬賀`, 500, 1260); 
                 }
 
-                // 其他角落與元寶
-                drawCharacter(ctx, 120, 120, 'sun'); 
-                drawCharacter(ctx, 150, 1340, 'bird'); 
-                drawCharacter(ctx, 850, 1340, 'sycee'); 
+                // 🚀 繪製四個角落的自定義 PNG 圖片
+                const iconSize = 120;
+                if (images.sun.complete)   ctx.drawImage(images.sun, 100, 100, iconSize, iconSize);     // 左上
+                if (images.horse.complete) ctx.drawImage(images.horse, 780, 100, iconSize, iconSize);   // 右上
+                if (images.bird.complete)  ctx.drawImage(images.bird, 100, 1500, iconSize, iconSize);   // 左下
+                if (images.gold.complete)  ctx.drawImage(images.gold, 780, 1500, iconSize, iconSize);   // 右下
 
-                // 印章 (由左至右、由上至下)
-                const blobCenterY = 1300; drawBlob(ctx, 500, blobCenterY, 70, '#FDE68A');
-                ctx.fillStyle = '#BE123C'; ctx.font = 'bold 36px "Noto Serif TC", serif';
-                ctx.fillText(randomPhrase[0], 480, blobCenterY - 5); 
-                ctx.fillText(randomPhrase[1], 520, blobCenterY - 5); 
-                ctx.fillText(randomPhrase[2], 480, blobCenterY + 35); 
-                ctx.fillText(randomPhrase[3], 520, blobCenterY + 35); 
+                // 印章
+                const blobCenterY = 1480; 
+                drawBlob(ctx, 500, blobCenterY, 75, '#FDE68A');
+                ctx.fillStyle = '#BE123C'; ctx.font = 'bold 42px "Noto Serif TC", serif';
+                ctx.fillText(randomPhrase[0], 475, blobCenterY - 10); ctx.fillText(randomPhrase[1], 525, blobCenterY - 10); 
+                ctx.fillText(randomPhrase[2], 475, blobCenterY + 40); ctx.fillText(randomPhrase[3], 525, blobCenterY + 40); 
 
-                // 頁尾
-                ctx.fillStyle = 'rgba(253, 230, 138, 0.8)'; ctx.textAlign = 'center'; ctx.font = '26px sans-serif';
-                ctx.fillText("© 2026 愛盟家庭文教基金會", 500, 1420);
-                ctx.font = '24px sans-serif'; ctx.fillText("為愛學習持續練習，是一件幸福的事", 500, 1460);
+                // 頁尾資訊 (修正為白色且在內部)
+                ctx.fillStyle = '#FFFFFF'; ctx.textAlign = 'center'; 
+                ctx.font = '32px sans-serif'; ctx.fillText("© 2026 愛盟家庭文教基金會", 500, 1650);
+                ctx.font = '30px sans-serif'; ctx.fillText("為愛學習持續練習，是一件幸福的事", 500, 1710);
             };
-
-            function drawCharacter(ctx, x, y, type) {
-                ctx.save(); ctx.translate(x, y); ctx.strokeStyle = '#FDE68A'; ctx.lineWidth = 4; ctx.lineCap = 'round';
-                if (type === 'sun') { ctx.fillStyle = '#FDE68A'; ctx.beginPath(); ctx.arc(0, 0, 30, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#BE123C'; ctx.beginPath(); ctx.arc(-8, -5, 2.5, 0, Math.PI*2); ctx.arc(8, -5, 2.5, 0, Math.PI*2); ctx.fill(); }
-                else if (type === 'bird') { ctx.fillStyle = '#FDE68A'; ctx.beginPath(); ctx.arc(0, 0, 25, 0, Math.PI*2); ctx.fill(); ctx.moveTo(-20, 0); ctx.lineTo(-35, -15); ctx.stroke(); }
-                else if (type === 'sycee') { 
-                    ctx.fillStyle = '#FDE68A'; ctx.beginPath(); ctx.moveTo(-35, 0); ctx.quadraticCurveTo(0, 45, 35, 0); ctx.quadraticCurveTo(45, -20, 20, -20); ctx.quadraticCurveTo(0, -5, -20, -20); ctx.quadraticCurveTo(-45, -20, -35, 0); ctx.fill();
-                    ctx.beginPath(); ctx.arc(0, -12, 16, Math.PI, 0); ctx.fill();
-                }
-                ctx.restore();
-            }
 
             function drawHandDrawnRect(ctx, x, y, w, h, r) {
                 ctx.beginPath(); const j = () => (Math.random() * 10 - 5);
@@ -302,8 +284,8 @@
                     try {
                         const blob = await (await fetch(finalImageUrl)).blob();
                         const file = new File([blob], '2026馬年賀卡.png', { type: 'image/png' });
-                        await navigator.share({ files: [file], title: '2026馬年賀卡', text: '祝您馬年大吉！' });
-                    } catch (err) { console.log('使用者取消分享'); }
+                        await navigator.share({ files: [file], title: '2026馬年賀卡', text: '送您一張馬年賀卡！' });
+                    } catch (err) { console.log('分享取消'); }
                 }
             };
 
@@ -373,7 +355,7 @@
                                 
                                 <div className="relative shadow-2xl rounded-[3rem] overflow-hidden bg-white mx-auto border-[12px] border-white ring-1 ring-slate-100">
                                     {isGenerating ? (
-                                        <div className="aspect-[1000/1550] w-full flex flex-col items-center justify-center gap-4 bg-slate-50">
+                                        <div className="aspect-[1000/1800] w-full flex flex-col items-center justify-center gap-4 bg-slate-50">
                                             <div className="w-16 h-16 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
                                             <p className="font-bold text-red-800 text-xl tracking-widest">繪製中...</p>
                                         </div>
@@ -388,7 +370,7 @@
                                         <Icon name="hand" size={32} className="text-yellow-600 animate-hint" />
                                         <p className="text-yellow-900 text-xl font-bold">【長按上方圖片】即可儲存到相簿</p>
                                     </div>
-                                    <p className="text-yellow-800/80 text-lg">儲存後就可以傳給 LINE 親友囉！</p>
+                                    <p className="text-yellow-800/80 text-lg font-medium">儲存後就可以傳給 LINE 親友囉！</p>
                                 </div>
 
                                 <div className="space-y-5">
