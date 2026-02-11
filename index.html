@@ -88,12 +88,12 @@
         // ============================================================
         // 💡 在這裡替換四個角落與表頭的 PNG 圖片網址
         // ============================================================
-        const HORSE_HEADER_URL = "https://raw.githubusercontent.com/belovedraod/test-newyear01/refs/heads/main/new_horse.png"; 
+        const HORSE_HEADER_URL = "https://img.freepik.com/free-vector/cute-horse-cartoon-vector-icon-illustration-animal-nature-icon-concept-isolated-premium-vector_138676-5412.jpg"; 
         
-        const SUN_IMAGE_URL   = "https://raw.githubusercontent.com/belovedraod/test-newyear01/refs/heads/main/new_horse.png"; // 左上角
-        const HORSE_ICON_URL  = "https://img.freepik.com/free-vector/cute-horse-cartoon-vector-icon-illustration-animal-nature-icon-concept-isolated-premium-vector_138676-5412.jpg"; // 右上角
-        const BIRD_IMAGE_URL  = "https://raw.githubusercontent.com/belovedraod/test-newyear01/refs/heads/main/new_horse-left.png";  // 左下角
-        const GOLD_IMAGE_URL  = "https://img.freepik.com/free-vector/gold-ingot-cartoon-vector-icon-illustration-wealth-concept-isolated-premium-vector_138676-5412.jpg";      // 右下角
+        const TOP_LEFT_IMAGE     = "https://img.freepik.com/free-vector/gold-ingot-cartoon-vector-icon-illustration-wealth-concept-isolated-premium-vector_138676-5412.jpg"; // 左上角 (金元寶)
+        const TOP_RIGHT_IMAGE    = "https://img.freepik.com/free-vector/cute-horse-cartoon-vector-icon-illustration-animal-nature-icon-concept-isolated-premium-vector_138676-5412.jpg"; // 右上角
+        const BOTTOM_LEFT_IMAGE  = "https://img.freepik.com/free-vector/cute-bird-cartoon-vector-icon-illustration-animal-nature-icon-concept-isolated-premium-vector_138676-5412.jpg";  // 左下角
+        const BOTTOM_RIGHT_IMAGE = "https://img.freepik.com/free-vector/sun-icon-vector-isolated-white-background_138676-5412.jpg";                                                     // 右下角
 
         const Icon = ({ name, size = 24, className = "" }) => {
             useEffect(() => {
@@ -173,59 +173,61 @@
                     const canvas = canvasRef.current;
                     const ctx = canvas.getContext('2d');
                     
-                    // 預載入所有需要的圖片
-                    const images = {
+                    const imgs = {
                         user: new Image(),
-                        sun: new Image(),
-                        horse: new Image(),
-                        bird: new Image(),
-                        gold: new Image()
+                        topLeft: new Image(),
+                        topRight: new Image(),
+                        bottomLeft: new Image(),
+                        bottomRight: new Image()
                     };
                     
-                    images.user.src = userImage;
-                    images.sun.src = SUN_IMAGE_URL;
-                    images.horse.src = HORSE_ICON_URL;
-                    images.bird.src = BIRD_IMAGE_URL;
-                    images.gold.src = GOLD_IMAGE_URL;
+                    imgs.user.src = userImage;
+                    imgs.topLeft.src = TOP_LEFT_IMAGE;
+                    imgs.topRight.src = TOP_RIGHT_IMAGE;
+                    imgs.bottomLeft.src = BOTTOM_LEFT_IMAGE;
+                    imgs.bottomRight.src = BOTTOM_RIGHT_IMAGE;
                     
-                    Object.values(images).forEach(img => img.crossOrigin = "anonymous");
+                    Object.values(imgs).forEach(img => img.crossOrigin = "anonymous");
 
                     let loadedCount = 0;
                     const onLoaded = () => {
                         loadedCount++;
                         if (loadedCount === 5) {
-                            drawFinalCard(ctx, canvas, images);
+                            drawFinalCard(ctx, canvas, imgs);
                             setFinalImageUrl(canvas.toDataURL('image/png'));
                             setIsGenerating(false);
                         }
                     };
 
-                    Object.values(images).forEach(img => {
+                    Object.values(imgs).forEach(img => {
                         img.onload = onLoaded;
-                        img.onerror = onLoaded; // 即使某張圖失敗也繼續
+                        img.onerror = onLoaded;
                     });
                 }
             }, [step, selectedWish, userImage]);
 
             const drawFinalCard = (ctx, canvas, images) => {
+                // 🚀 高度提升至 1800px
                 canvas.width = 1000;
                 canvas.height = 1800; 
                 
                 const filteredPhrases = luckPhrases.filter(p => !selectedWish.blessing.includes(p));
                 const randomPhrase = filteredPhrases[Math.floor(Math.random() * filteredPhrases.length)] || luckPhrases[0];
 
-                // 背景
+                // 1. 底層宣紙感
                 ctx.fillStyle = '#fdfbf7'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // 2. 紅色背景
                 ctx.save();
                 ctx.globalAlpha = 0.95; ctx.fillStyle = '#C8102E'; 
                 drawHandDrawnRect(ctx, 40, 40, 920, 1720, 60);
                 ctx.fill(); ctx.restore();
 
-                // 邊框
+                // 3. 金色飾邊
                 ctx.strokeStyle = 'rgba(253, 230, 138, 0.7)'; ctx.lineWidth = 12; ctx.setLineDash([20, 15]);
                 drawHandDrawnRect(ctx, 70, 70, 860, 1660, 40); ctx.stroke(); ctx.setLineDash([]);
 
-                // 照片
+                // 4. 照片
                 const photoX = 100, photoY = 130, photoW = 800, photoH = 750;
                 ctx.save(); drawHandDrawnRect(ctx, photoX, photoY, photoW, photoH, 50); ctx.clip();
                 const imgRatio = images.user.width / images.user.height;
@@ -235,7 +237,7 @@
                 else { dW = photoW; dH = images.user.height * (photoW / images.user.width); dX = photoX; dY = photoY - (dH - photoH) / 2; }
                 ctx.drawImage(images.user, dX, dY, dW, dH); ctx.restore();
 
-                // 文字排版 (大字設計)
+                // 5. 文字排版 (大字優化)
                 ctx.fillStyle = '#FDE68A'; ctx.textAlign = 'center'; 
                 ctx.font = 'bold 95px "Noto Serif TC", serif'; ctx.fillText(selectedWish.blessing, 500, 1050); 
                 ctx.font = '48px sans-serif'; ctx.fillText(`2026 丙午馬年 · 願您${selectedWish.label}如意`, 500, 1150); 
@@ -244,24 +246,31 @@
                     ctx.fillText(`${userName} 敬賀`, 500, 1260); 
                 }
 
-                // 🚀 繪製四個角落的自定義 PNG 圖片
-                const iconSize = 120;
-                if (images.sun.complete)   ctx.drawImage(images.sun, 100, 100, iconSize, iconSize);     // 左上
-                if (images.horse.complete) ctx.drawImage(images.horse, 780, 100, iconSize, iconSize);   // 右上
-                if (images.bird.complete)  ctx.drawImage(images.bird, 100, 1500, iconSize, iconSize);   // 左下
-                if (images.gold.complete)  ctx.drawImage(images.gold, 780, 1500, iconSize, iconSize);   // 右下
+                // 6. 繪製角落圖片 (調整尺寸與位置)
+                const normalSize = 120;
+                const largeSize = 180; // 🚀 放大 1.5 倍
 
-                // 印章
+                // 上方圖片 (120px)
+                if (images.topLeft.complete)     ctx.drawImage(images.topLeft, 100, 100, normalSize, normalSize);   
+                if (images.topRight.complete)    ctx.drawImage(images.topRight, 780, 100, normalSize, normalSize); 
+                
+                // 下方圖片 (180px)
+                if (images.bottomLeft.complete)  ctx.drawImage(images.bottomLeft, 80, 1460, largeSize, largeSize); 
+                if (images.bottomRight.complete) ctx.drawImage(images.bottomRight, 740, 1460, largeSize, largeSize); 
+
+                // 7. 印章
                 const blobCenterY = 1480; 
                 drawBlob(ctx, 500, blobCenterY, 75, '#FDE68A');
                 ctx.fillStyle = '#BE123C'; ctx.font = 'bold 42px "Noto Serif TC", serif';
-                ctx.fillText(randomPhrase[0], 475, blobCenterY - 10); ctx.fillText(randomPhrase[1], 525, blobCenterY - 10); 
-                ctx.fillText(randomPhrase[2], 475, blobCenterY + 40); ctx.fillText(randomPhrase[3], 525, blobCenterY + 40); 
+                ctx.fillText(randomPhrase[0], 475, blobCenterY - 10); 
+                ctx.fillText(randomPhrase[1], 525, blobCenterY - 10); 
+                ctx.fillText(randomPhrase[2], 475, blobCenterY + 40); 
+                ctx.fillText(randomPhrase[3], 525, blobCenterY + 40); 
 
-                // 頁尾資訊 (修正為白色且在內部)
+                // 8. 頁尾資訊 (純白色)
                 ctx.fillStyle = '#FFFFFF'; ctx.textAlign = 'center'; 
-                ctx.font = '32px sans-serif'; ctx.fillText("© 2026 愛盟家庭文教基金會", 500, 1650);
-                ctx.font = '30px sans-serif'; ctx.fillText("為愛學習持續練習，是一件幸福的事", 500, 1710);
+                ctx.font = '32px sans-serif'; ctx.fillText("© 2026 愛盟家庭文教基金會", 500, 1660);
+                ctx.font = '30px sans-serif'; ctx.fillText("為愛學習持續練習，是一件幸福的事", 500, 1720);
             };
 
             function drawHandDrawnRect(ctx, x, y, w, h, r) {
